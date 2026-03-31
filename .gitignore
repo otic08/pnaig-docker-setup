@@ -8,3 +8,6 @@ _solr/schema.xml
 _src/*
 local/*
 .env
+
+# local settings
+.github/c*
