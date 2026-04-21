@@ -37,6 +37,23 @@ services:
       timeout: 10s
       retries: 3
 
+  docs:
+    image: oven/bun:1.2-alpine
+    command: >
+      sh -c "apk add --no-cache git &&
+        git clone --depth 1 --branch development https://github.com/otic08/ckanaction-pnaig.git /ckanaction-pnaig &&
+        cd /ckanaction-pnaig/docs &&
+        bun install --frozen-lockfile &&
+        bun dev --hostname 0.0.0.0 --port 3000"
+    environment:
+      - NEXT_TELEMETRY_DISABLED=1
+    ports:
+      - "0.0.0.0:${DOCS_PORT_HOST:-3000}:3000"
+    depends_on:
+      ckan-dev:
+        condition: service_healthy
+    restart: unless-stopped
+
   datapusher:
     image: ckan/ckan-base-datapusher:${DATAPUSHER_VERSION}
     restart: unless-stopped
