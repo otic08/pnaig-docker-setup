@@ -43,11 +43,11 @@ services:
     command: >
       sh -c "apk add --no-cache git &&
         if [ -d /ckanaction-pnaig/.git ]; then
-          git -C /ckanaction-pnaig fetch --depth 1 origin development &&
-          git -C /ckanaction-pnaig checkout -B development origin/development;
+          git -C /ckanaction-pnaig fetch --depth 1 origin pnaig_testing &&
+          git -C /ckanaction-pnaig checkout -B pnaig_testing origin/pnaig_testing;
         else
           rm -rf /ckanaction-pnaig &&
-          git clone --depth 1 --branch development https://github.com/otic08/ckanaction-pnaig.git /ckanaction-pnaig;
+          git clone --depth 1 --branch pnaig_testing https://github.com/otic08/ckanaction-pnaig.git /ckanaction-pnaig;
         fi &&
         cd /ckanaction-pnaig/docs &&
         bun install --frozen-lockfile &&
