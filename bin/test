@@ -1,0 +1,59 @@
+#!/bin/bash
+# Run pytest for extensions in the ckan-dev container
+#
+# Usage:
+#   bin/test                           # Run all tests for all extensions
+#   bin/test ckanext-pnaig-user        # Run tests for specific extension
+#   bin/test ckanext-pnaig-user -v     # With verbose output
+#   bin/test ckanext-pnaig-user -k test_create  # Run specific test
+
+set -e
+
+COMPOSE_FILE="docker-compose.dev.yml"
+CONTAINER="ckan-dev"
+EXT_PATH="/srv/app/src_extensions"
+
+# Check if container is running
+if ! docker compose -f "$COMPOSE_FILE" ps --services --filter "status=running" | grep -q "$CONTAINER"; then
+    echo "Error: $CONTAINER container is not running."
+    echo "Start it with: bin/compose up -d"
+    exit 1
+fi
+
+# Parse arguments
+EXTENSION=""
+PYTEST_ARGS=""
+
+if [ $# -gt 0 ]; then
+    # Check if first arg looks like an extension name
+    if [[ "$1" == ckanext-* ]]; then
+        EXTENSION="$1"
+        shift
+    fi
+    PYTEST_ARGS="$*"
+fi
+
+# Install test dependencies if needed
+docker compose -f "$COMPOSE_FILE" exec -T "$CONTAINER" pip install -q pytest-ckan pytest-mock pytest-cov 2>/dev/null || true
+
+if [ -n "$EXTENSION" ]; then
+    # Run tests for specific extension
+    echo "Running tests for $EXTENSION..."
+    docker compose -f "$COMPOSE_FILE" exec "$CONTAINER" bash -c "
+        cd $EXT_PATH/$EXTENSION && \
+        pytest --ckan-ini=test.ini $PYTEST_ARGS ckanext/*/tests/
+    "
+else
+    # Run tests for all extensions
+    echo "Running tests for all extensions..."
+    for ext_dir in src/ckanext-*/; do
+        ext_name=$(basename "$ext_dir")
+        if [ -d "$ext_dir/ckanext" ]; then
+            echo "=== Testing $ext_name ==="
+            docker compose -f "$COMPOSE_FILE" exec "$CONTAINER" bash -c "
+                cd $EXT_PATH/$ext_name && \
+                pytest --ckan-ini=test.ini $PYTEST_ARGS ckanext/*/tests/ || true
+            "
+        fi
+    done
+fi
