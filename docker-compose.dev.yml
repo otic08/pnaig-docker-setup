@@ -108,7 +108,7 @@ services:
         - TZ=${TZ}
     env_file:
       - .env
-    entrypoint: ["ckan", "-c", "/srv/app/ckan.ini", "jobs", "worker"]
+    entrypoint: ["ckan", "-c", "/srv/app/ckan.ini", "jobs", "worker", "pnaig-emailer"]
     links:
       - db
       - solr
