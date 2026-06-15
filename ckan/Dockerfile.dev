@@ -34,6 +34,13 @@ FROM ckan/ckan-dev:2.11
 # Clone the extension(s) your are writing for your own project in the `src` folder
 # to get them mounted in this image at runtime
 
+# Install tools required by remote IDE server connections (Windsurf, Cursor, etc.)
+USER root
+RUN apt-get update && apt-get install -y --no-install-recommends curl procps &&rm -rf /var/lib/apt/lists/*
+
+USER ckan-sys
+
+
 # Copy custom initialization scripts
 COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 
