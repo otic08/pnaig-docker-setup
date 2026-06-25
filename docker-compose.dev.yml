@@ -8,7 +8,6 @@ volumes:
   home_dir:
 
 services:
-
   ckan-dev:
     platform: linux/amd64
     build:
@@ -89,8 +88,9 @@ services:
       - pg_data:/var/lib/postgresql/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
-     
+      test:
+        ["CMD", "pg_isready", "-U", "${POSTGRES_USER}", "-d", "${POSTGRES_DB}"]
+
   solr:
     image: ckan/ckan-solr:${SOLR_IMAGE_VERSION}
     volumes:
@@ -98,6 +98,33 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-qO", "/dev/null", "http://localhost:8983/solr/"]
+
+  email-worker:
+    platform: linux/amd64
+    build:
+      context: ckan/
+      dockerfile: Dockerfile.dev
+      args:
+        - TZ=${TZ}
+    env_file:
+      - .env
+    entrypoint:
+      ["ckan", "-c", "/srv/app/ckan.ini", "jobs", "worker", "pnaig-emailer"]
+    links:
+      - db
+      - solr
+      - redis
+    volumes:
+      - ckan_storage:/var/lib/ckan
+      - ./src:/srv/app/src_extensions
+      - pip_cache:/root/.cache/pip
+      - site_packages:/usr/local/lib/python3.10/site-packages
+      - local_bin:/usr/local/bin
+      - home_dir:/srv/app/
+    depends_on:
+      ckan-dev:
+        condition: service_healthy
+    restart: unless-stopped
 
   redis:
     image: redis:${REDIS_VERSION}
