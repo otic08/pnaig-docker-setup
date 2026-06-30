@@ -7,4 +7,3 @@ if [[ "${CKAN__PLUGINS:-}" == *"pnaig_user"* ]]; then
 else
   echo "Skipping pnaig_user DB migrations (plugin not enabled)"
 fi
-

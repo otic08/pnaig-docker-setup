@@ -1,0 +1,7 @@
+{
+  "name": "CKAN Dev",
+  "dockerComposeFile": "../docker-compose.dev.yml",
+  "service": "ckan-dev",
+  "remoteUser": "root",
+  "workspaceFolder": "/srv/app",
+}
