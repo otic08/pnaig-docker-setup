@@ -38,19 +38,22 @@ services:
       retries: 3
 
   docs:
-    image: oven/bun:1.2-alpine
+    image: node:22-alpine
     command: >
       sh -c "apk add --no-cache git &&
+        corepack enable &&
+        corepack prepare pnpm@latest --activate &&
         if [ -d /ckanaction-pnaig/.git ]; then
-          git -C /ckanaction-pnaig fetch --depth 1 origin pnaig_testing &&
-          git -C /ckanaction-pnaig checkout -B pnaig_testing origin/pnaig_testing;
+          git -C /ckanaction-pnaig fetch --depth 1 origin pnaig_remote &&
+          git -C /ckanaction-pnaig checkout -B pnaig_remote origin/pnaig_remote;
         else
           rm -rf /ckanaction-pnaig &&
-          git clone --depth 1 --branch pnaig_testing https://github.com/otic08/ckanaction-pnaig.git /ckanaction-pnaig;
+          git clone --depth 1 --branch pnaig_remote https://github.com/otic08/ckanaction-pnaig.git /ckanaction-pnaig;
         fi &&
         cd /ckanaction-pnaig/docs &&
-        bun install --frozen-lockfile &&
-        bun dev --hostname 0.0.0.0 --port 3000"
+        pnpm install --frozen-lockfile &&
+        pnpx ts-node ./scripts/generate-docs.ts &&
+        pnpm dev"
     environment:
       - NEXT_TELEMETRY_DISABLED=1
     ports:
