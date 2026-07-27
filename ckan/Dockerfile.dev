@@ -1,4 +1,4 @@
-FROM ckan/ckan-dev:2.12b-py3.14
+FROM ckan/ckan-dev:2.12
 
 # Install any extensions needed by your CKAN instance
 # - Make sure to add the plugins to CKAN__PLUGINS in the .env file
@@ -34,7 +34,7 @@ FROM ckan/ckan-dev:2.12b-py3.14
 # Clone the extension(s) your are writing for your own project in the `src` folder
 # to get them mounted in this image at runtime
 
-# Install tools required by remote IDE server connections (Windsurf, Cursor, etc.)
+# Install tools required by remote connections
 USER root
 RUN apt-get update && apt-get install -y --no-install-recommends curl procps &&rm -rf /var/lib/apt/lists/*
 
