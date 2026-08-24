@@ -23,6 +23,7 @@ services:
       - redis
     ports:
       - "0.0.0.0:${CKAN_PORT_HOST}:5000"
+      - "127.0.0.1:${CKAN_DEBUG_PORT_HOST}:5678" # For debugpy clients within the host machine
     volumes:
       - ckan_storage:/var/lib/ckan
       - ./src:/srv/app/src_extensions
