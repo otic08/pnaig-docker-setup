@@ -129,6 +129,34 @@ services:
       ckan-dev:
         condition: service_healthy
     restart: unless-stopped
+  
+
+  downloads-worker-main:
+    platform: linux/amd64
+    build:
+      context: ckan/
+      dockerfile: Dockerfile.dev
+      args:
+        - TZ=${TZ}
+    env_file:
+      - .env
+    user: "0:0"
+    entrypoint: ["/opt/start_worker_debug.sh"]
+    ports:
+      - "127.0.0.1:5679:5679"
+    volumes:
+      - ckan_storage:/var/lib/ckan
+      - ./src:/srv/app/src_extensions
+      - pip_cache:/root/.cache/pip
+      - site_packages:/usr/local/lib/python3.14/site-packages
+      - local_bin:/usr/local/bin
+      - home_dir:/srv/app/
+    depends_on:
+      solr:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
   redis:
     image: redis:${REDIS_VERSION}
