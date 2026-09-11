@@ -8,4 +8,4 @@ set -e
 
 # Run the downloads worker under debugpy as the ckan user.
 exec su -s /bin/sh ckan -c \
-  "exec /usr/local/bin/python -Xfrozen_modules=off -m debugpy --listen 0.0.0.0:5679 --wait-for-client /usr/local/bin/ckan -c /srv/app/ckan.ini jobs worker pnaig-downloads"
+  "exec /usr/local/bin/python -Xfrozen_modules=off -m debugpy --listen 0.0.0.0:5679 /usr/local/bin/ckan -c /srv/app/ckan.ini jobs worker pnaig-downloads-light"
