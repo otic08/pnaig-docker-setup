@@ -158,6 +158,87 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  downloads-worker-heavy:
+    platform: linux/amd64
+    build:
+      context: ckan/
+      dockerfile: Dockerfile.dev
+      args:
+        - TZ=${TZ}
+    env_file:
+      - .env
+    entrypoint:
+      ["ckan", "-c", "/srv/app/ckan.ini", "jobs", "worker", "pnaig-downloads-heavy"]
+    links:
+      - db
+      - solr
+      - redis
+    volumes:
+      - ckan_storage:/var/lib/ckan
+      - ./src:/srv/app/src_extensions
+      - pip_cache:/root/.cache/pip
+      - site_packages:/usr/local/lib/python3.14/site-packages
+      - local_bin:/usr/local/bin
+      - home_dir:/srv/app/
+    depends_on:
+      ckan-dev:
+        condition: service_healthy
+    restart: unless-stopped
+
+  maintenance-worker:
+    platform: linux/amd64
+    build:
+      context: ckan/
+      dockerfile: Dockerfile.dev
+      args:
+        - TZ=${TZ}
+    env_file:
+      - .env
+    entrypoint:
+      ["ckan", "-c", "/srv/app/ckan.ini", "jobs", "worker", "pnaig-maintenance"]
+    links:
+      - db
+      - solr
+      - redis
+    volumes:
+      - ckan_storage:/var/lib/ckan
+      - ./src:/srv/app/src_extensions
+      - pip_cache:/root/.cache/pip
+      - site_packages:/usr/local/lib/python3.14/site-packages
+      - local_bin:/usr/local/bin
+      - home_dir:/srv/app/
+    depends_on:
+      ckan-dev:
+        condition: service_healthy
+    restart: unless-stopped
+
+  audit-worker:
+    platform: linux/amd64
+    build:
+      context: ckan/
+      dockerfile: Dockerfile.dev
+      args:
+        - TZ=${TZ}
+    env_file:
+      - .env
+    entrypoint:
+      ["ckan", "-c", "/srv/app/ckan.ini", "jobs", "worker", "pnaig-audit"]
+    links:
+      - db
+      - solr
+      - redis
+    volumes:
+      - ckan_storage:/var/lib/ckan
+      - ./src:/srv/app/src_extensions
+      - pip_cache:/root/.cache/pip
+      - site_packages:/usr/local/lib/python3.14/site-packages
+      - local_bin:/usr/local/bin
+      - home_dir:/srv/app/
+    depends_on:
+      ckan-dev:
+        condition: service_healthy
+    restart: unless-stopped
+
   redis:
     image: redis:${REDIS_VERSION}
     restart: unless-stopped
