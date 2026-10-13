@@ -43,30 +43,37 @@ fi
 # Install test dependencies if needed
 docker compose -f "$COMPOSE_FILE" exec -T "$CONTAINER" pip install -q pytest-ckan pytest-mock pytest-cov 2>/dev/null || true
 
-if [ -n "$EXTENSION" ]; then
-    # Run tests for specific extension
-    echo "Running tests for $EXTENSION..."
+# CKAN__PLUGINS (set in the container from .env) overrides the plugin list in
+# test.ini, leaking sibling extensions' actions/signals into test runs.
+# Re-pin it to whatever the extension's own test.ini declares.
+test_plugins() {
+    grep "^ckan.plugins" "$1/test.ini" 2>/dev/null | sed 's/^[^=]*=//'
+}
+
+run_pytest() {
+    local ext="$1"
+    local plugins
+    plugins=$(test_plugins "src/$ext")
     docker compose -f "$COMPOSE_FILE" exec "$CONTAINER" bash -c "
-        cd $EXT_PATH/$EXTENSION && \
+        cd $EXT_PATH/$ext && \
         export CKAN_SQLALCHEMY_URL=\"$TEST_CKAN_SQLALCHEMY_URL\" && \
         export CKAN_DATASTORE_WRITE_URL=\"$TEST_CKAN_DATASTORE_WRITE_URL\" && \
         export CKAN_DATASTORE_READ_URL=\"$TEST_CKAN_DATASTORE_READ_URL\" && \
+        ${plugins:+export CKAN__PLUGINS=\"$plugins\" && }\
         pytest --ckan-ini=test.ini $PYTEST_ARGS ckanext/*/tests/
     "
+}
+
+if [ -n "$EXTENSION" ]; then
+    echo "Running tests for $EXTENSION..."
+    run_pytest "$EXTENSION"
 else
-    # Run tests for all extensions
     echo "Running tests for all extensions..."
     for ext_dir in src/ckanext-*/; do
         ext_name=$(basename "$ext_dir")
         if [ -d "$ext_dir/ckanext" ]; then
             echo "=== Testing $ext_name ==="
-            docker compose -f "$COMPOSE_FILE" exec "$CONTAINER" bash -c "
-                cd $EXT_PATH/$ext_name && \
-                export CKAN_SQLALCHEMY_URL=\"$TEST_CKAN_SQLALCHEMY_URL\" && \
-                export CKAN_DATASTORE_WRITE_URL=\"$TEST_CKAN_DATASTORE_WRITE_URL\" && \
-                export CKAN_DATASTORE_READ_URL=\"$TEST_CKAN_DATASTORE_READ_URL\" && \
-                pytest --ckan-ini=test.ini $PYTEST_ARGS ckanext/*/tests/ || true
-            "
+            run_pytest "$ext_name" || true
         fi
     done
 fi
