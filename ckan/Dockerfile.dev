@@ -49,7 +49,10 @@ COPY --chown=ckan-sys:ckan-sys docker-entrypoint.d/* /docker-entrypoint.d/
 COPY --chown=ckan-sys:ckan-sys patches ${APP_DIR}/patches
 
 COPY --chown=ckan-sys:ckan-sys setup/start_worker_debug.sh /opt/start_worker_debug.sh
+COPY --chown=ckan-sys:ckan-sys setup/start_worker_scidata_debug.sh /opt/start_worker_scidata_debug.sh
+
 RUN chmod +x /opt/start_worker_debug.sh
+RUN chmod +x /opt/start_worker_scidata_debug.sh
 
 USER ckan
 

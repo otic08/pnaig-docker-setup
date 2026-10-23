@@ -6,6 +6,8 @@ volumes:
   site_packages:
   local_bin:
   home_dir:
+  grafana_data:
+  prometheus_data:
 
 services:
   ckan-dev:
@@ -248,8 +250,11 @@ services:
         - TZ=${TZ}
     env_file:
       - .env
-    entrypoint:
-      ["ckan", "-c", "/srv/app/ckan.ini", "jobs", "worker", "pnaig-scidata"]
+    user: "0:0"
+    entrypoint: ["/opt/start_worker_scidata_debug.sh"]
+    ports:
+      - "127.0.0.1:5680:5680"
+
     links:
       - db
       - solr
@@ -273,3 +278,40 @@ services:
       test: ["CMD", "redis-cli", "-e", "QUIT"]
     ports:
       - "0.0.0.0:${REDIS_PORT_HOST:-6379}:6379"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+  rq-exporter:
+    image: mdawar/rq-exporter:v3.0.0
+    restart: unless-stopped
+    environment:
+      RQ_REDIS_URL: redis://redis:6379/1
+    depends_on:
+      redis:
+        condition: service_healthy
+
+
+  prometheus:
+    image: prom/prometheus:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+    depends_on:
+      - rq-exporter
